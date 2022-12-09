@@ -32,6 +32,7 @@ import org.apache.solr.search.QParser;
 import org.apache.solr.search.QueryParsing;
 import org.apache.solr.search.QueryUtils;
 import org.apache.solr.search.SyntaxError;
+import org.apache.solr.search.FunctionRangeQParserPlugin;
 
 public class KnnQParser extends QParser {
 
@@ -90,7 +91,7 @@ public class KnnQParser extends QParser {
         List<Query> filters;
 
         try {
-          filters = QueryUtils.parseFilterQueries(req, true);
+          filters = QueryUtils.parseFilterQueries(req, true, false);
         } catch (SyntaxError e) {
           throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, e);
         }

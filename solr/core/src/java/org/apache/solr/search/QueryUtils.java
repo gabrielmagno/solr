@@ -35,6 +35,8 @@ import org.apache.lucene.search.Query;
 import org.apache.solr.common.SolrException;
 import org.apache.solr.common.params.CommonParams;
 import org.apache.solr.request.SolrQueryRequest;
+import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.search.QueryParsing;
 
 /** */
 public class QueryUtils {
@@ -235,7 +237,7 @@ public class QueryUtils {
    *     list.
    * @throws SyntaxError if an error occurs during parsing
    */
-  public static List<Query> parseFilterQueries(SolrQueryRequest req, boolean fixNegativeQueries)
+  public static List<Query> parseFilterQueries(SolrQueryRequest req, boolean fixNegativeQueries, boolean includeFRange)
       throws SyntaxError {
 
     String[] filterQueriesStr = req.getParams().getParams(CommonParams.FQ);
@@ -245,12 +247,19 @@ public class QueryUtils {
       for (String fq : filterQueriesStr) {
         if (fq != null && fq.trim().length() != 0) {
           QParser fqp = QParser.getParser(fq, req);
-          fqp.setIsFilter(true);
-          Query query = fqp.getQuery();
-          if (fixNegativeQueries) {
-            query = makeQueryable(query);
+          SolrParams queryLocalParams = fqp.getLocalParams();
+          String queryType = null;
+          if (queryLocalParams != null) {
+            queryType = queryLocalParams.get(QueryParsing.TYPE);
           }
-          filters.add(query);
+          if ((queryType == null) || (!queryType.contains(FunctionRangeQParserPlugin.NAME)) || includeFRange) {
+            fqp.setIsFilter(true);
+            Query query = fqp.getQuery();
+            if (fixNegativeQueries) {
+              query = makeQueryable(query);
+            }
+            filters.add(query);
+          }
         }
       }
       return filters;
